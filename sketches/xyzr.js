@@ -29,7 +29,7 @@ function() {
       }
 
       if(isShowingGuide){
-        textHeight(this.mScale(0.5));
+        textHeight(this.mScale(0.25));
         mText(this.guide[guides_index], [0, 0], .5, .5);
       }
    }
