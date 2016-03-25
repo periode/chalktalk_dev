@@ -1,5 +1,7 @@
 function() {
    this.label = 'xyzr';
+   this.guide = ['demonstrating coordinates + radius', 'second part'];
+   this.guide_index = 0;
    this.show_xyzr = false;
    this.show_sn   = false;
 
@@ -18,11 +20,17 @@ function() {
          mText('r', [X*.45, Y*.45], 1.3, 1.2);
       }
 
+
+
       if (this.show_sn) {
          mArrow([-X, Y], [-X*1.5, Y*1.5]);
          mText('N', [-X*1.62, Y*1.62], .5, .5);
          mText('S', [-X, Y], -.25, -.25);
       }
+
+      if(isShowingGuide){
+        textHeight(this.mScale(0.5));
+        mText(this.guide[guides_index], [0, 0], .5, .5);
+      }
    }
 }
-

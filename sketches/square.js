@@ -1,5 +1,6 @@
 function() {
    this.label = 'square';
+   this.guide = 'you can use a square to be hip';
    this.mode = 0;
 
    this.onClick = function() { this.mode++; }
@@ -9,6 +10,8 @@ function() {
       mLine([ 1,-1],[ 1, 1]);
       mLine([ 1, 1],[-1, 1]);
       mLine([-1, 1],[-1,-1]);
+
+      mText(this.guide, [0, 0], 1, .5);
 
       this.afterSketch(function() {
          textHeight(this.mScale(0.2));
