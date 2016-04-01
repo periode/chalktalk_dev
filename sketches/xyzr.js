@@ -28,9 +28,9 @@ function() {
          mText('S', [-X, Y], -.25, -.25);
       }
 
-      if(isShowingGuide){
-        textHeight(this.mScale(0.25));
-        mText(this.guide[guides_index], [0, 0], .5, .5);
-      }
+      // if(isShowingGuide){
+      //   textHeight(this.mScale(0.25));
+      //   mText(this.guide[guides_index], [0, 0], .5, .5);
+      // }
    }
 }
