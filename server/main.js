@@ -5,6 +5,20 @@ var fs = require("fs");
 var http = require("http");
 var path = require("path");
 
+
+var mongoose = require('mongoose');
+
+var mongoURI = "mongodb://localhost:27017/test";
+var MongoDB = mongoose.connect(mongoURI).connection;
+MongoDB.on('error', function(err) { console.log(err.message); });
+MongoDB.once('open', function() {
+  console.log("mongodb connection open");
+
+  //creating the schema for sketches
+  var sketch_schema = new mongoose.Schema(sketch: Object);
+  var SavedSketch = mongoose.model('SavedSketch', sketch_schema);
+});
+
 /////////////////////////////////////////////////////////////////////////////////////
 
 var ttServer = require('dgram').createSocket('udp4');
@@ -99,6 +113,18 @@ app.route("/set").post(function(req, res, next) {
 
       var key = fields.key;
 
+      //this is where we should be saving the files to the database
+
+      console.log('the type of the request received is', (typeof req));
+
+      var to_save = new SavedSketch({sketch: req});
+      to_save.save(function(err){
+        if(err)
+          console.log('error during save: ', err);
+        else {
+          console.log('Successfully saved!');
+        }
+      })
       var suffix = ".json";
       if (key.indexOf(suffix, key.length - suffix.length) == -1)
          key += suffix;
@@ -273,7 +299,7 @@ try {
                     "position": { "x": px, "y": py, "z": pz },
                     "rotation": { "x": qx, "y": qy, "z": qz, "w": qw }
                  });
-  
+
                  var update = new updateProtoBuilders.Update({
                     "id": "abc",
                     "mod_version": 123,
@@ -360,5 +386,3 @@ try {
 httpserver.listen(parseInt(port, 10), function() {
    console.log("HTTP server listening on port %d", httpserver.address().port);
 });
-
-

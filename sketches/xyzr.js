@@ -1,7 +1,6 @@
 function() {
    this.label = 'xyzr';
    this.guide = ['demonstrating coordinates + radius', 'second part'];
-   this.guide_index = 0;
    this.show_xyzr = false;
    this.show_sn   = false;
 
