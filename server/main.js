@@ -124,7 +124,8 @@ app.route("/set").post(function(req, res, next) {
         else {
           console.log('Successfully saved!');
         }
-      })
+      });
+
       var suffix = ".json";
       if (key.indexOf(suffix, key.length - suffix.length) == -1)
          key += suffix;
