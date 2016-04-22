@@ -7,6 +7,7 @@ var path = require("path");
 
 
 var mongoose = require('mongoose');
+var SavedSketch;
 
 var mongoURI = "mongodb://localhost:27017/test";
 var MongoDB = mongoose.connect(mongoURI).connection;
@@ -15,8 +16,8 @@ MongoDB.once('open', function() {
   console.log("mongodb connection open");
 
   //creating the schema for sketches
-  var sketch_schema = new mongoose.Schema(sketch: Object);
-  var SavedSketch = mongoose.model('SavedSketch', sketch_schema);
+  var sketch_schema = new mongoose.Schema({sketch: Object});
+  SavedSketch = mongoose.model('SavedSketch', sketch_schema);
 });
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -106,25 +107,28 @@ app.route("/getTT").post(function(req, res, next) {
 });
 
 app.route("/set").post(function(req, res, next) {
+  console.log('saving on server');
    var form = formidable.IncomingForm();
+
+   console.log(form);
+   console.log('the type of the request received is', (typeof req));
+
+   var to_save = new SavedSketch({sketch: req.value});
+   to_save.save(function(err){
+     if(err)
+       console.log('error during save: ', err);
+     else {
+       console.log('Successfully saved!');
+     }
+   });
+
    form.parse(req, function(err, fields, files) {
       res.writeHead(200, {"content-type": "text/plain"});
       res.write('received upload:\n\n');
 
       var key = fields.key;
 
-      //this is where we should be saving the files to the database
-
-      console.log('the type of the request received is', (typeof req));
-
-      var to_save = new SavedSketch({sketch: req});
-      to_save.save(function(err){
-        if(err)
-          console.log('error during save: ', err);
-        else {
-          console.log('Successfully saved!');
-        }
-      });
+      //this is where we should be saving the files to the databas
 
       var suffix = ".json";
       if (key.indexOf(suffix, key.length - suffix.length) == -1)
@@ -386,4 +390,5 @@ try {
 // START THE HTTP SERVER
 httpserver.listen(parseInt(port, 10), function() {
    console.log("HTTP server listening on port %d", httpserver.address().port);
+   console.log('up');
 });
