@@ -4,6 +4,7 @@ var formidable = require("formidable");
 var fs = require("fs");
 var http = require("http");
 var path = require("path");
+//var db = require("./db.js");
 
 
 var mongoose = require('mongoose');
@@ -19,6 +20,9 @@ MongoDB.once('open', function() {
   var sketch_schema = new mongoose.Schema({sketch: Object});
   SavedSketch = mongoose.model('SavedSketch', sketch_schema);
 });
+
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 
