@@ -4,23 +4,25 @@ var formidable = require("formidable");
 var fs = require("fs");
 var http = require("http");
 var path = require("path");
-//var db = require("./db.js");
-
-
+var db = require("./db.js");
 var mongoose = require('mongoose');
-var SavedSketch;
+var SketchSchema = require('../schemas/sketch_objs');
+var app = express();
 
-var mongoURI = "mongodb://localhost:27017/test";
-var MongoDB = mongoose.connect(mongoURI).connection;
-MongoDB.on('error', function(err) { console.log(err.message); });
-MongoDB.once('open', function() {
-  console.log("mongodb connection open");
+// var mongoose = require('mongoose');
+// var SavedSketch;
+
+// var mongoURI = "mongodb://localhost:27017/test";
+// var MongoDB = mongoose.connect(mongoURI).connection;
+// MongoDB.on('error', function(err) { console.log(err.message); });
+// MongoDB.once('open', function() {
+//   console.log("mongodb connection open");
 
   //creating the schema for sketches
-  var sketch_schema = new mongoose.Schema({sketch: Object});
-  SavedSketch = mongoose.model('SavedSketch', sketch_schema);
-});
-
+  var sketchSchema =  mongoose.Schema({ name: String, sketchData : Array
+  });
+var SavedSketch = mongoose.model('Sketch', sketchSchema);
+// });
 
 
 
@@ -42,7 +44,7 @@ ttServer.bind(9090, '127.0.0.1');
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-var app = express();
+
 var port = process.argv[2] || 11235;
 
 // serve static files from main directory
@@ -117,14 +119,14 @@ app.route("/set").post(function(req, res, next) {
    console.log(form);
    console.log('the type of the request received is', (typeof req));
 
-   var to_save = new SavedSketch({sketch: req.value});
-   to_save.save(function(err){
-     if(err)
-       console.log('error during save: ', err);
-     else {
-       console.log('Successfully saved!');
-     }
-   });
+   // var to_save = new SavedSketch({sketch: req.value});
+   // to_save.save(function(err){
+   //   if(err)
+   //     console.log('error during save: ', err);
+   //   else {
+   //     console.log('Successfully saved!');
+   //   }
+   // });
 
    form.parse(req, function(err, fields, files) {
       res.writeHead(200, {"content-type": "text/plain"});
@@ -132,7 +134,22 @@ app.route("/set").post(function(req, res, next) {
 
       var key = fields.key;
 
-      //this is where we should be saving the files to the databas
+      // //this is where we should be saving the files to the databas
+      // var newSketch = new SavedSketch();
+      // newSketch.name = key;
+      // newSketch.sketchData =  fields.value;
+      // newSketch.save(function(err,savedObject){
+      //   if(err){
+      //          console.log(err);
+      //          res.status(500).json({status:'failure'})
+      //       }
+      //       else{
+      //         console.log("ID: " + fields.value.id + " strokeData:" + fields.value.strokes);
+      //          res.json({status: 'success'});
+      //       }
+      // });
+            
+          
 
       var suffix = ".json";
       if (key.indexOf(suffix, key.length - suffix.length) == -1)
@@ -149,6 +166,38 @@ app.route("/set").post(function(req, res, next) {
       res.end();
    });
 });
+
+app.route("/addSketch").post(function(req, res, next) {
+  console.log('saving on server');
+   var form = formidable.IncomingForm();
+
+   console.log(form);
+   console.log('the type of the request received is', (typeof req));
+
+  form.parse(req, function(err, fields, files) {
+      res.writeHead(200, {"content-type": "text/plain"});
+      res.write('received upload:\n\n');
+
+
+    var name = fields.name;
+    var newSketch = new SavedSketch();
+      newSketch.name = name;
+      newSketch.sketchData =  fields.value;
+      newSketch.save(function(err,savedObject){
+        if(err){
+               console.log(err);
+               res.status(500).json({status:'failure'})
+            }
+            else{
+              console.log("ID: " + fields.value.id + " strokeData:" + fields.value.strokes);
+               res.json({status: 'success'});
+            }
+      });
+
+         res.end();
+  });
+
+  });
 
 app.route("/talk").get(function(req, res) {
    res.sendfile("index.html");
