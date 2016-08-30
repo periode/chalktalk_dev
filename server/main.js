@@ -8,6 +8,7 @@ var db = require("./db.js");
 var mongoose = require('mongoose');
 var SketchSchema = require('../schemas/sketch_objs');
 var app = express();
+var session = require('express-session');
 
 // var mongoose = require('mongoose');
 // var SavedSketch;
@@ -19,12 +20,24 @@ var app = express();
 //   console.log("mongodb connection open");
 
   //creating the schema for sketches
-  var sketchSchema =  mongoose.Schema({ name: String, sketchData : Array
+var sketchSchema =  mongoose.Schema({ name: String, sketchData : Array
   });
 var SavedSketch = mongoose.model('Sketch', sketchSchema);
 // });
 
 
+var userSchema =  new mongoose.Schema({
+  username: {type: String, unique : true},
+  password: {type: String},
+  firstname: String,
+  lastname: String,
+  
+  sketches:[sketchSchema]
+});
+
+var User = mongoose.model('User', userSchema);
+
+module.exports = User;
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -53,6 +66,7 @@ app.use(express.static("./"));
 // handle uploaded files
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(session({secret:"topsecret", resave: false, saveUninitialized: true})); //secret should be stored in a DB, never in project files
 app.route("/upload").post(function(req, res, next) {
    var form = formidable.IncomingForm();
    form.uploadDir = "./sketches";
@@ -119,38 +133,13 @@ app.route("/set").post(function(req, res, next) {
    console.log(form);
    console.log('the type of the request received is', (typeof req));
 
-   // var to_save = new SavedSketch({sketch: req.value});
-   // to_save.save(function(err){
-   //   if(err)
-   //     console.log('error during save: ', err);
-   //   else {
-   //     console.log('Successfully saved!');
-   //   }
-   // });
-
    form.parse(req, function(err, fields, files) {
       res.writeHead(200, {"content-type": "text/plain"});
       res.write('received upload:\n\n');
 
       var key = fields.key;
-
-      // //this is where we should be saving the files to the databas
-      // var newSketch = new SavedSketch();
-      // newSketch.name = key;
-      // newSketch.sketchData =  fields.value;
-      // newSketch.save(function(err,savedObject){
-      //   if(err){
-      //          console.log(err);
-      //          res.status(500).json({status:'failure'})
-      //       }
-      //       else{
-      //         console.log("ID: " + fields.value.id + " strokeData:" + fields.value.strokes);
-      //          res.json({status: 'success'});
-      //       }
-      // });
+});
             
-          
-
       var suffix = ".json";
       if (key.indexOf(suffix, key.length - suffix.length) == -1)
          key += suffix;
@@ -165,9 +154,75 @@ app.route("/set").post(function(req, res, next) {
 
       res.end();
    });
-});
 
-app.route("/addSketch").post(function(req, res, next) {
+
+
+// app.route("/addSketch").post(function(req, res, next) {
+//   console.log('saving on server');
+//    var form = formidable.IncomingForm();
+
+//    console.log(form);
+//    console.log('the type of the request received is', (typeof req));
+
+//   form.parse(req, function(err, fields, files) {
+//       res.writeHead(200, {"content-type": "text/plain"});
+//       res.write('received upload:\n\n');
+//     var name = fields.name;
+//     var newSketch = new SavedSketch();
+//       newSketch.name = name;
+//       newSketch.sketchData =  fields.value;
+//       newSketch.save(function(err,savedObject){
+//         if(err){
+//                console.log(err);
+//                res.status(500).json({status:'failure'})
+//             }
+//             else{
+//               console.log("ID: " + fields.value.id + " strokeData:" + fields.value.strokes);
+//                res.json({status: 'success'});
+//             } 
+//       });
+
+//          res.end();
+//   });
+//   });
+
+
+
+app.route("/addSketch/:username").put(function(req, res, next) {
+  var user_name = req.params.username;
+  User.findOne({username:user_name},function(err,foundObject){
+    if(err){
+      console.log("error");
+      res.status(500).send();
+    }
+    else{
+      if(!foundObject){
+        res.status(404).send();
+      }
+      else{
+        
+        if(req.body.strokes && req.body.sketchName){
+          
+          foundObject.sketches.push({name:req.body.sketchName, sketchData:req.body.strokes});
+          var subdoc = foundObject.sketches[0];
+          console.log(subdoc);
+          subdoc.isNew;
+        }
+        foundObject.save(function(err,updatedObject){
+          if(err){
+            console.log(err);
+            res.status(500).send();
+          }
+          else{
+            res.send(updatedObject);
+          }
+        });
+      }
+    }
+
+  });
+
+
   console.log('saving on server');
    var form = formidable.IncomingForm();
 
@@ -177,8 +232,6 @@ app.route("/addSketch").post(function(req, res, next) {
   form.parse(req, function(err, fields, files) {
       res.writeHead(200, {"content-type": "text/plain"});
       res.write('received upload:\n\n');
-
-
     var name = fields.name;
     var newSketch = new SavedSketch();
       newSketch.name = name;
@@ -191,13 +244,64 @@ app.route("/addSketch").post(function(req, res, next) {
             else{
               console.log("ID: " + fields.value.id + " strokeData:" + fields.value.strokes);
                res.json({status: 'success'});
-            }
+            } 
       });
 
          res.end();
   });
-
   });
+
+
+app.route("/logout").get(function(req,res){
+  req.session.destroy();
+  return res.status(200).send();  
+});
+
+app.route("/dashboard").get(function(req,res){
+  if(!req.session.user){
+    return res.status(401).send();
+  }
+
+  return res.status(200).send("Welcome to super-secret API");
+});
+
+app.route("/login").post(function(req,res){
+  var username = req.body.username; 
+  var password = req.body.password;
+
+  User.findOne({username:username, password:password}, function(err,user){
+     if(err){
+      console.log("error");
+      return res.status(500).send();
+    }
+    if(!user){
+      return res.status(400).send();
+    }
+    req.session.user = user;
+    return res.status(200).send(); 
+  })
+});
+
+app.route("/register").post(function(req,res){
+  var username = req.body.username; 
+  var password = req.body.password;
+  var firstname = req.body.firstname;
+  var lastname = req.body.lastname;
+
+  var newUser = new User();
+  newUser.username = username;
+  newUser.password = password;
+  newUser.firstname = firstname;
+  newUser.lastname = lastname;
+
+  newUser.save(function(err,savedUser){
+    if(err){
+      console.log("error");
+      return res.status(500).send();
+    }
+  return res.status(200).send();
+  });
+});
 
 app.route("/talk").get(function(req, res) {
    res.sendfile("index.html");
